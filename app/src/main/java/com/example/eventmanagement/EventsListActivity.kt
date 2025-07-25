@@ -11,6 +11,9 @@ import android.os.Bundle
 import android.widget.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class EventsListActivity : Activity() {
     private lateinit var database: EventDatabase
@@ -54,26 +57,30 @@ class EventsListActivity : Activity() {
         }
     }
 
-    private fun convertTimeFormat(time: String): String {
-        return time.replace("AM", "kalai").replace("PM", "malai")
-    }
-
     private fun loadEventsForName(name: String) {
         runBlocking {
             launch {
+                // Get current date in dd/MM/yyyy format
+                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+
+                // Delete expired events for all users
+                database.eventDao().deleteExpiredEvents(currentDate)
+
                 eventsList.clear()
-                eventsList.addAll(database.eventDao().getEventsByName(name))
+                // Load only future events
+                eventsList.addAll(database.eventDao().getFutureEventsByName(name, currentDate))
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
-                        "Date: ${event.date} | Time: ${convertTimeFormat(event.time)}"
+                        val customTime = event.time.replace("AM", "kalai").replace("PM", "malai")
+                        "Date: ${event.date} | Time: $customTime"
                     }
 
                     eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
                     eventsListView.adapter = eventsAdapter
 
                     if (eventsList.isEmpty()) {
-                        Toast.makeText(this@EventsListActivity, "No events found for $name", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@EventsListActivity, "No upcoming events found for $name", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
