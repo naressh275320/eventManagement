@@ -5,6 +5,25 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <Button
+        android:id="@+id/eventsBackButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Back to Results Page"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@android:color/holo_orange_dark" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="Back to Results Page"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:background="@android:color/holo_orange_dark"
+        android:textColor="@color/white"
+        android:layout_marginBottom="16dp" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,6 +58,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:paddingHorizontal="20dp"
         android:layout_marginBottom="16dp"
         android:divider="@android:color/holo_blue_light"
         android:dividerHeight="1dp" />
@@ -54,10 +74,16 @@
         android:textColor="@android:color/darker_gray" />
 
     <Button
-        android:id="@+id/eventsBackButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Back to Results"
-        android:backgroundTint="@android:color/holo_orange_dark" />
+        android:id="@+id/shareEventsButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="360dp"
+        android:text="+"
+        android:textColor="@android:color/white"
+        android:background="@drawable/rounded_button_background"
+        android:textSize="15sp"
+        android:layout_marginBottom="8dp" />
+
+
 
 </LinearLayout>

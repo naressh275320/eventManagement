@@ -31,9 +31,6 @@ interface EventDao {
     @Query("DELETE FROM events WHERE date < :currentDate")
     suspend fun deleteExpiredEvents(currentDate: String)
 
-    @Query("SELECT * FROM events WHERE date >= :currentDate ORDER BY timestamp DESC")
-    suspend fun getFutureEvents(name: String, currentDate: String): List<Event>
-
     @Query("SELECT * FROM events WHERE name = :name AND date >= :currentDate ORDER BY timestamp DESC")
     suspend fun getFutureEventsByName(name: String, currentDate: String): List<Event>
 }

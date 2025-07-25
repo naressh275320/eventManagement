@@ -1,12 +1,8 @@
-/*
- * (C) Copyright Elektrobit Automotive GmbH
- * All rights reserved
- */
-
 package com.example.eventmanagement
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.*
 import kotlinx.coroutines.launch
@@ -20,6 +16,7 @@ class EventsListActivity : Activity() {
     private lateinit var nameTextView: TextView
     private lateinit var eventsListView: ListView
     private lateinit var backButton: Button
+    private lateinit var shareButton: Button // Added share button reference
 
     private var eventsList = mutableListOf<Event>()
     private lateinit var eventsAdapter: ArrayAdapter<String>
@@ -27,7 +24,7 @@ class EventsListActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_events_list)
+        setContentView(R.layout.activity_events_list) // Make sure this matches your XML file name
 
         database = EventDatabase.getDatabase(this)
         selectedName = intent.getStringExtra("selected_name") ?: ""
@@ -41,6 +38,7 @@ class EventsListActivity : Activity() {
         nameTextView = findViewById(R.id.selectedNameTextView)
         eventsListView = findViewById(R.id.eventsListView)
         backButton = findViewById(R.id.eventsBackButton)
+        shareButton = findViewById(R.id.shareEventsButton) // Initialize the share button
 
         nameTextView.text = "Events for: $selectedName"
     }
@@ -54,6 +52,11 @@ class EventsListActivity : Activity() {
             if (position < eventsList.size) {
                 showEditDeleteDialog(eventsList[position])
             }
+        }
+
+        // Set OnClickListener for the Share button
+        shareButton.setOnClickListener {
+            shareEventsToWhatsApp()
         }
     }
 
@@ -134,4 +137,42 @@ class EventsListActivity : Activity() {
             loadEventsForName(selectedName)
         }
     }
+
+    // --- New method for sharing events ---
+    private fun shareEventsToWhatsApp() {
+        val stringBuilder = StringBuilder()
+        stringBuilder.append(nameTextView.text.toString()).append("\n\n") // Add the "Events for:" line
+
+        // Build the list of events from the 'eventsList' (your original data source)
+        if (eventsList.isNotEmpty()) {
+            stringBuilder.append("My Events:\n")
+            for (event in eventsList) {
+                val customTime = event.time.replace("AM", "kalai").replace("PM", "malai")
+                stringBuilder.append("- Date: ${event.date} | Time: $customTime\n")
+            }
+        } else {
+            stringBuilder.append("No upcoming events to share!")
+        }
+
+        val shareText = stringBuilder.toString()
+
+        val shareIntent = Intent(Intent.ACTION_SEND)
+        shareIntent.type = "text/plain"
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText)
+
+        // Try to directly target WhatsApp
+        val whatsappPackage = "com.whatsapp"
+        try {
+            packageManager.getPackageInfo(whatsappPackage, PackageManager.GET_ACTIVITIES)
+            shareIntent.setPackage(whatsappPackage)
+            startActivity(shareIntent)
+        } catch (e: PackageManager.NameNotFoundException) {
+            // WhatsApp is not installed, offer a general share chooser
+            Toast.makeText(this, "WhatsApp is not installed. Sharing via general options.", Toast.LENGTH_LONG).show()
+            startActivity(Intent.createChooser(shareIntent, "Share events via..."))
+        }
+        // Alternatively, always use the general share chooser for broader options:
+        // startActivity(Intent.createChooser(shareIntent, "Share events via..."))
+    }
+    // --- End of new method ---
 }
