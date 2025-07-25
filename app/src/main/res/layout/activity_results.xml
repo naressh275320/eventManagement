@@ -31,16 +31,18 @@
         android:id="@+id/showEventsButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Show Events"
+        android:text="Show Events in New Page"
         android:layout_marginBottom="16dp"
         android:backgroundTint="@android:color/holo_blue_dark" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Events (Tap to Edit/Delete):"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp" />
+        android:text="Click 'Show Events' to view events list in separate page"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:textStyle="italic" />
 
     <ListView
         android:id="@+id/eventsListView"

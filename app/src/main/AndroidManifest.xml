@@ -27,6 +27,9 @@
         <activity
             android:name=".EditEventActivity"
             android:exported="false" />
+        <activity
+            android:name=".EventsListActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

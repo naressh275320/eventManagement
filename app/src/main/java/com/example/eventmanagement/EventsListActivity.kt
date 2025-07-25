@@ -6,17 +6,11 @@
 package com.example.eventmanagement
 
 import android.app.Activity
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
-import androidx.room.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.text.SimpleDateFormat
-import java.util.*
 
 class EventsListActivity : Activity() {
     private lateinit var database: EventDatabase
@@ -60,6 +54,10 @@ class EventsListActivity : Activity() {
         }
     }
 
+    private fun convertTimeFormat(time: String): String {
+        return time.replace("AM", "kalai").replace("PM", "malai")
+    }
+
     private fun loadEventsForName(name: String) {
         runBlocking {
             launch {
@@ -68,7 +66,7 @@ class EventsListActivity : Activity() {
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
-                        "Date: ${event.date} | Time: ${event.time}"
+                        "Date: ${event.date} | Time: ${convertTimeFormat(event.time)}"
                     }
 
                     eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
@@ -126,30 +124,7 @@ class EventsListActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 1 && resultCode == RESULT_OK) {
-            // Refresh the events list
             loadEventsForName(selectedName)
-        }
-    }
-}
-
-@Database(entities = [Event::class], version = 1)
-abstract class EventDatabase : RoomDatabase() {
-    abstract fun eventDao(): EventDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: EventDatabase? = null
-
-        fun getDatabase(context: android.content.Context): EventDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    EventDatabase::class.java,
-                    "event_database"
-                ).build()
-                INSTANCE = instance
-                instance
-            }
         }
     }
 }

@@ -8,6 +8,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -122,12 +123,17 @@ class MainActivity : AppCompatActivity() {
         val timePickerDialog = TimePickerDialog(
             this,
             { _, hourOfDay, minute ->
-                selectedTime = String.format("%02d:%02d", hourOfDay, minute)
+                // Convert 24-hour format to 12-hour format with AM/PM
+                val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                val time = Calendar.getInstance()
+                time.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                time.set(Calendar.MINUTE, minute)
+                selectedTime = timeFormat.format(time.time)
                 timeButton.text = "Time: $selectedTime"
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
-            true
+            false  // Changed from true to false to show 12-hour format
         )
         timePickerDialog.show()
     }
