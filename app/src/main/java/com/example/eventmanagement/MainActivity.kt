@@ -8,19 +8,25 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.*
 
-class MainActivity : Activity() {
+// Keep your existing NameTimeSelection data class if it's in a separate file,
+// otherwise define it here or in the MultiSelectAdapter file.
+// data class NameTimeSelection(val name: String, var isSelected: Boolean = false, var time: String = "")
+
+class MainActivity : Activity() { // If you need AppCompat features like toolbar/themes, change this to AppCompatActivity
     private lateinit var database: EventDatabase
     private lateinit var customNameEditText: EditText
     private lateinit var dateButton: Button
     private lateinit var saveButton: Button
     private lateinit var viewResultsButton: Button
     private lateinit var addCustomNameButton: Button
-    private lateinit var multiSelectListView: ListView
+    private lateinit var multiSelectRecyclerView: RecyclerView // Changed from ListView
     private lateinit var selectAllButton: Button
     private lateinit var clearAllButton: Button
 
@@ -31,7 +37,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_main) // Make sure this matches your XML file name
 
         database = EventDatabase.getDatabase(this)
 
@@ -47,35 +53,47 @@ class MainActivity : Activity() {
         saveButton = findViewById(R.id.saveButton)
         viewResultsButton = findViewById(R.id.viewResultsButton)
         addCustomNameButton = findViewById(R.id.addCustomNameButton)
-        multiSelectListView = findViewById(R.id.multiSelectListView)
+        multiSelectRecyclerView = findViewById(R.id.multiSelectRecyclerView) // Changed ID to match XML
         selectAllButton = findViewById(R.id.selectAllButton)
         clearAllButton = findViewById(R.id.clearAllButton)
     }
 
     private fun setupMultiSelectList() {
         // Initialize the name-time selections
-        for (name in predefinedNames) {
-            nameTimeSelections.add(NameTimeSelection(name))
+        // This should only happen once unless you want to reset the list
+        if (nameTimeSelections.isEmpty()) { // Ensure names are added only once
+            for (name in predefinedNames) {
+                nameTimeSelections.add(NameTimeSelection(name))
+            }
         }
 
-        multiSelectAdapter = MultiSelectAdapter(this, nameTimeSelections) { position ->
+
+        multiSelectAdapter = MultiSelectAdapter(nameTimeSelections) { position ->
             showTimePickerForPosition(position)
         }
-        multiSelectListView.adapter = multiSelectAdapter
+        multiSelectRecyclerView.layoutManager = LinearLayoutManager(this) // Set LayoutManager
+        multiSelectRecyclerView.adapter = multiSelectAdapter
     }
 
     private fun loadExistingNames() {
         runBlocking {
             launch {
                 val existingNames = database.eventDao().getAllNames()
+                val newNamesToAdd = mutableListOf<NameTimeSelection>()
                 for (name in existingNames) {
-                    if (!predefinedNames.contains(name) && name.isNotEmpty()) {
-                        predefinedNames.add(name)
-                        nameTimeSelections.add(NameTimeSelection(name))
+                    // Check if name is already in predefined or already loaded
+                    if (!predefinedNames.contains(name) && !nameTimeSelections.any { it.name == name } && name.isNotEmpty()) {
+                        predefinedNames.add(name) // Add to predefined for future launches
+                        newNamesToAdd.add(NameTimeSelection(name))
                     }
                 }
+                // Add new names to the existing list
+                if (newNamesToAdd.isNotEmpty()) {
+                    nameTimeSelections.addAll(newNamesToAdd)
+                }
+
                 runOnUiThread {
-                    multiSelectAdapter.notifyDataSetChanged()
+                    multiSelectAdapter.notifyDataSetChanged() // Notify adapter of data changes
                 }
             }
         }
@@ -84,10 +102,11 @@ class MainActivity : Activity() {
     private fun setupListeners() {
         addCustomNameButton.setOnClickListener {
             val customName = customNameEditText.text.toString().trim()
-            if (customName.isNotEmpty() && !predefinedNames.contains(customName)) {
-                predefinedNames.add(customName)
+            // Check against current list including dynamically added names
+            if (customName.isNotEmpty() && !nameTimeSelections.any { it.name.equals(customName, ignoreCase = true) }) {
+                predefinedNames.add(customName) // Keep track of all names
                 nameTimeSelections.add(NameTimeSelection(customName))
-                multiSelectAdapter.notifyDataSetChanged()
+                multiSelectAdapter.notifyItemInserted(nameTimeSelections.size - 1) // More efficient update
                 customNameEditText.setText("")
                 Toast.makeText(this, "Name added to list", Toast.LENGTH_SHORT).show()
             } else if (customName.isEmpty()) {
@@ -98,18 +117,25 @@ class MainActivity : Activity() {
         }
 
         selectAllButton.setOnClickListener {
-            for (selection in nameTimeSelections) {
-                selection.isSelected = true
+            for ((index, selection) in nameTimeSelections.withIndex()) {
+                if (!selection.isSelected) { // Only update if not already selected
+                    selection.isSelected = true
+                    multiSelectAdapter.notifyItemChanged(index) // Update only changed item
+                }
             }
-            multiSelectAdapter.notifyDataSetChanged()
+            // If you want to use notifyDataSetChanged(), that's also fine, just less efficient
+            // multiSelectAdapter.notifyDataSetChanged()
         }
 
         clearAllButton.setOnClickListener {
-            for (selection in nameTimeSelections) {
-                selection.isSelected = false
-                selection.time = ""
+            for ((index, selection) in nameTimeSelections.withIndex()) {
+                if (selection.isSelected || selection.time.isNotEmpty()) { // Only update if state needs changing
+                    selection.isSelected = false
+                    selection.time = ""
+                    multiSelectAdapter.notifyItemChanged(index) // Update only changed item
+                }
             }
-            multiSelectAdapter.notifyDataSetChanged()
+            // multiSelectAdapter.notifyDataSetChanged()
         }
 
         dateButton.setOnClickListener {
@@ -148,7 +174,7 @@ class MainActivity : Activity() {
             { _, hourOfDay, minute ->
                 val time = formatTimeWithAmPm(hourOfDay, minute)
                 nameTimeSelections[position].time = time
-                multiSelectAdapter.notifyDataSetChanged()
+                multiSelectAdapter.notifyItemChanged(position) // Notify only this item changed
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
@@ -201,58 +227,14 @@ class MainActivity : Activity() {
 
     private fun resetFields() {
         selectedDate = ""
-        dateButton.text = "Select Date"
+        dateButton.text = "Select Common Date" // Changed text to match XML
 
-        for (selection in nameTimeSelections) {
-            selection.isSelected = false
-            selection.time = ""
-        }
-        multiSelectAdapter.notifyDataSetChanged()
-    }
-}
-
-class MultiSelectAdapter(
-    private val context: Activity,
-    private val nameTimeSelections: MutableList<NameTimeSelection>,
-    private val onTimeClick: (Int) -> Unit
-) : BaseAdapter() {
-
-    override fun getCount(): Int = nameTimeSelections.size
-
-    override fun getItem(position: Int): Any = nameTimeSelections[position]
-
-    override fun getItemId(position: Int): Long = position.toLong()
-
-    override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup?): View {
-        val view = convertView ?: context.layoutInflater.inflate(R.layout.multi_select_item, parent, false)
-
-        val checkBox = view.findViewById<CheckBox>(R.id.nameCheckBox)
-        val nameText = view.findViewById<TextView>(R.id.nameTextView)
-        val timeButton = view.findViewById<Button>(R.id.timeSelectButton)
-
-        val selection = nameTimeSelections[position]
-
-        checkBox.text = selection.name
-        checkBox.isChecked = selection.isSelected
-
-        timeButton.text = if (selection.time.isEmpty()) "Select Time" else "Time: ${selection.time}"
-        timeButton.isEnabled = selection.isSelected
-
-        checkBox.setOnCheckedChangeListener { _, isChecked ->
-            selection.isSelected = isChecked
-            timeButton.isEnabled = isChecked
-            if (!isChecked) {
+        for ((index, selection) in nameTimeSelections.withIndex()) {
+            if (selection.isSelected || selection.time.isNotEmpty()) {
+                selection.isSelected = false
                 selection.time = ""
-                timeButton.text = "Select Time"
+                multiSelectAdapter.notifyItemChanged(index) // Update only changed item
             }
         }
-
-        timeButton.setOnClickListener {
-            if (selection.isSelected) {
-                onTimeClick(position)
-            }
-        }
-
-        return view
     }
 }
