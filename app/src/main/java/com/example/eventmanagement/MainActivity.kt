@@ -25,7 +25,7 @@ class MainActivity : Activity() {
     private lateinit var clearAllButton: Button
 
     private var selectedDate = ""
-    private val predefinedNames = mutableListOf("John Doe", "Jane Smith", "Mike Johnson", "Sarah Wilson")
+    private val predefinedNames = mutableListOf("Ruben", "Mahendra", "Vishnu", "Gopal", "Padmanabhan", "Manimaran")
     private val nameTimeSelections = mutableListOf<NameTimeSelection>()
     private lateinit var multiSelectAdapter: MultiSelectAdapter
 

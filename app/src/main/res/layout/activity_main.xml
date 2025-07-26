@@ -84,7 +84,7 @@
         <ListView
             android:id="@+id/multiSelectListView"
             android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_height="500dp"
             android:layout_marginBottom="16dp"
             android:divider="@android:color/darker_gray"
             android:dividerHeight="1dp"
