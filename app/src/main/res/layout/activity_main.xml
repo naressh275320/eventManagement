@@ -7,31 +7,21 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
         android:orientation="vertical">
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:text="JB Catering Staff Management"
-            android:textSize="24sp"
-            android:textStyle="italic"
-            android:gravity="center"
-            android:background="#0CC4C7"
-            android:textColor="#F5F4EB"
-            android:layout_marginBottom="24dp" />
-
-        <Button
-            android:id="@+id/dateButton"
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Date"
-            android:layout_marginBottom="16dp" />
+            android:text="Multi-Person Event Management"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Staff Name:"
+            android:text="Add Custom Name:"
             android:textSize="16sp"
             android:layout_marginBottom="8dp" />
 
@@ -61,29 +51,62 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Name:"
+            android:text="Select People and Assign Times:"
             android:textSize="16sp"
+            android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
-        <Spinner
-            android:id="@+id/nameSpinner"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/selectAllButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Select All"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/holo_green_light" />
+
+            <Button
+                android:id="@+id/clearAllButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Clear All"
+                android:backgroundTint="@android:color/holo_red_light" />
+
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/multiSelectListView"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="16dp"
+            android:divider="@android:color/darker_gray"
+            android:dividerHeight="1dp"
+            android:background="@android:drawable/editbox_background" />
 
         <Button
-            android:id="@+id/timeButton"
+            android:id="@+id/dateButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Time"
-            android:layout_marginBottom="16dp" />
+            android:text="Select Common Date"
+            android:layout_marginBottom="16dp"
+            android:textSize="16sp"
+            android:backgroundTint="@android:color/holo_blue_dark" />
 
         <Button
             android:id="@+id/saveButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save Staff information"
+            android:text="Save All Events"
             android:layout_marginBottom="16dp"
+            android:textSize="18sp"
+            android:textStyle="bold"
             android:backgroundTint="@android:color/holo_green_dark" />
 
         <Button
@@ -91,7 +114,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="View Results"
-            android:layout_marginTop="220dp" />
+            android:backgroundTint="@android:color/holo_blue_dark" />
 
     </LinearLayout>
 

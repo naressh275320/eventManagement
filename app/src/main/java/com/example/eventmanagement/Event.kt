@@ -17,3 +17,10 @@ data class Event(
     val time: String,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+// Data class to hold selected names and their assigned times
+data class NameTimeSelection(
+    val name: String,
+    var time: String = "",
+    var isSelected: Boolean = false
+)

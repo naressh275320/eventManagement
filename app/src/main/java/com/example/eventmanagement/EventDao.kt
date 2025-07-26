@@ -19,18 +19,18 @@ interface EventDao {
     @Query("SELECT DISTINCT name FROM events ORDER BY name")
     suspend fun getAllNames(): List<String>
 
+    @Query("SELECT * FROM events WHERE date = :date AND time = :time")
+    suspend fun getEventsAtDateTime(date: String, time: String): List<Event>
+
     @Insert
     suspend fun insertEvent(event: Event)
+
+    @Insert
+    suspend fun insertEvents(events: List<Event>)
 
     @Delete
     suspend fun deleteEvent(event: Event)
 
     @Update
     suspend fun updateEvent(event: Event)
-
-    @Query("DELETE FROM events WHERE date < :currentDate")
-    suspend fun deleteExpiredEvents(currentDate: String)
-
-    @Query("SELECT * FROM events WHERE name = :name AND date >= :currentDate ORDER BY timestamp DESC")
-    suspend fun getFutureEventsByName(name: String, currentDate: String): List<Event>
 }

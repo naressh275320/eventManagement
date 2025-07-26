@@ -12,7 +12,6 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:gravity="center"
-        android:layout_marginTop="20dp"
         android:layout_marginBottom="16dp" />
 
     <TextView
@@ -45,7 +44,7 @@
         android:dividerHeight="1dp" />
 
     <Button
-        android:id="@+id/shareEventsButton"
+        android:id="@+id/shareButton"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginStart="360dp"
@@ -55,22 +54,11 @@
         android:textSize="15sp"
         android:layout_marginBottom="8dp" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="No events? Go back and add some events first!"
-        android:textSize="14sp"
-        android:layout_marginBottom="8dp"
-        android:gravity="center"
-        android:textStyle="italic"
-        android:textColor="@android:color/darker_gray" />
-
     <Button
         android:id="@+id/eventsBackButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Back to Results Page"
         android:backgroundTint="@android:color/holo_orange_dark" />
-
 
 </LinearLayout>

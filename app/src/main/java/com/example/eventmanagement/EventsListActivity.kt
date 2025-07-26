@@ -5,9 +5,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.*
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -16,7 +20,7 @@ class EventsListActivity : Activity() {
     private lateinit var nameTextView: TextView
     private lateinit var eventsListView: ListView
     private lateinit var backButton: Button
-    private lateinit var shareButton: Button // Added share button reference
+    private lateinit var shareButton: Button
 
     private var eventsList = mutableListOf<Event>()
     private lateinit var eventsAdapter: ArrayAdapter<String>
@@ -24,7 +28,7 @@ class EventsListActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_events_list) // Make sure this matches your XML file name
+        setContentView(R.layout.activity_events_list)
 
         database = EventDatabase.getDatabase(this)
         selectedName = intent.getStringExtra("selected_name") ?: ""
@@ -38,7 +42,7 @@ class EventsListActivity : Activity() {
         nameTextView = findViewById(R.id.selectedNameTextView)
         eventsListView = findViewById(R.id.eventsListView)
         backButton = findViewById(R.id.eventsBackButton)
-        shareButton = findViewById(R.id.shareEventsButton) // Initialize the share button
+        shareButton = findViewById(R.id.shareButton)
 
         nameTextView.text = "Events for: $selectedName"
     }
@@ -48,34 +52,33 @@ class EventsListActivity : Activity() {
             finish()
         }
 
+        shareButton.setOnClickListener {
+            shareEventsListToWhatsApp()
+        }
+
         eventsListView.setOnItemClickListener { _, _, position, _ ->
             if (position < eventsList.size) {
                 showEditDeleteDialog(eventsList[position])
             }
-        }
-
-        // Set OnClickListener for the Share button
-        shareButton.setOnClickListener {
-            shareEventsToWhatsApp()
         }
     }
 
     private fun loadEventsForName(name: String) {
         runBlocking {
             launch {
-                // Get current date in dd/MM/yyyy format
-                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-
-                // Delete expired events for all users
-                database.eventDao().deleteExpiredEvents(currentDate)
-
                 eventsList.clear()
-                // Load only future events
-                eventsList.addAll(database.eventDao().getFutureEventsByName(name, currentDate))
+                val allEvents = database.eventDao().getEventsByName(name)
+
+                // Filter out past events - only show future events
+                val futureEvents = allEvents.filter { event ->
+                    isEventInFuture(event.date)
+                }
+
+                eventsList.addAll(futureEvents)
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
-                        val customTime = event.time.replace("AM", "kalai").replace("PM", "malai")
+                        val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
                         "Date: ${event.date} | Time: $customTime"
                     }
 
@@ -83,10 +86,41 @@ class EventsListActivity : Activity() {
                     eventsListView.adapter = eventsAdapter
 
                     if (eventsList.isEmpty()) {
-                        Toast.makeText(this@EventsListActivity, "No upcoming events found for $name", Toast.LENGTH_SHORT).show()
+                        if (allEvents.isNotEmpty()) {
+                            Toast.makeText(this@EventsListActivity, "All events for $name have passed", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@EventsListActivity, "No events found for $name", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private fun isEventInFuture(eventDateString: String): Boolean {
+        return try {
+            val dateFormat = SimpleDateFormat("d/M/yyyy", Locale.getDefault())
+            val eventDate = dateFormat.parse(eventDateString)
+            val currentDate = Calendar.getInstance()
+
+            // Set current date to start of day (00:00:00) for accurate comparison
+            currentDate.set(Calendar.HOUR_OF_DAY, 0)
+            currentDate.set(Calendar.MINUTE, 0)
+            currentDate.set(Calendar.SECOND, 0)
+            currentDate.set(Calendar.MILLISECOND, 0)
+
+            val eventCalendar = Calendar.getInstance()
+            eventCalendar.time = eventDate ?: return false
+            eventCalendar.set(Calendar.HOUR_OF_DAY, 0)
+            eventCalendar.set(Calendar.MINUTE, 0)
+            eventCalendar.set(Calendar.SECOND, 0)
+            eventCalendar.set(Calendar.MILLISECOND, 0)
+
+            // Return true if event date is today or in the future
+            !eventCalendar.before(currentDate)
+        } catch (e: Exception) {
+            // If date parsing fails, show the event to be safe
+            true
         }
     }
 
@@ -131,48 +165,53 @@ class EventsListActivity : Activity() {
         builder.show()
     }
 
+    private fun shareEventsListToWhatsApp() {
+        if (eventsList.isEmpty()) {
+            Toast.makeText(this, "No events to share", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val shareText = buildShareText()
+
+        try {
+            val whatsappIntent = Intent(Intent.ACTION_SEND)
+            whatsappIntent.type = "text/plain"
+            whatsappIntent.setPackage("com.whatsapp")
+            whatsappIntent.putExtra(Intent.EXTRA_TEXT, shareText)
+            startActivity(whatsappIntent)
+        } catch (e: Exception) {
+            // If WhatsApp is not installed, show generic share dialog
+            val shareIntent = Intent(Intent.ACTION_SEND)
+            shareIntent.type = "text/plain"
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareText)
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Events for $selectedName")
+            startActivity(Intent.createChooser(shareIntent, "Share Events via"))
+        }
+    }
+
+    private fun buildShareText(): String {
+        val shareText = StringBuilder()
+        shareText.append("Event Schedule for $selectedName\n\n")
+
+        if (eventsList.isNotEmpty()) {
+            // Sort events by date and time (only future events are in the list)
+            val sortedEvents = eventsList.sortedWith(compareBy({ it.date }, { it.time }))
+
+            for (event in sortedEvents) {
+                val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
+                shareText.append("Date: ${event.date}\n")
+                shareText.append("Time: $customTime\n\n")
+            }
+        }
+
+        return shareText.toString().trim()
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 1 && resultCode == RESULT_OK) {
             loadEventsForName(selectedName)
         }
     }
-
-    // --- New method for sharing events ---
-    private fun shareEventsToWhatsApp() {
-        val stringBuilder = StringBuilder()
-        stringBuilder.append(nameTextView.text.toString()).append("\n\n") // Add the "Events for:" line
-
-        // Build the list of events from the 'eventsList' (your original data source)
-        if (eventsList.isNotEmpty()) {
-            stringBuilder.append("My Events:\n")
-            for (event in eventsList) {
-                val customTime = event.time.replace("AM", "kalai").replace("PM", "malai")
-                stringBuilder.append("- Date: ${event.date} | Time: $customTime\n")
-            }
-        } else {
-            stringBuilder.append("No upcoming events to share!")
-        }
-
-        val shareText = stringBuilder.toString()
-
-        val shareIntent = Intent(Intent.ACTION_SEND)
-        shareIntent.type = "text/plain"
-        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText)
-
-        // Try to directly target WhatsApp
-        val whatsappPackage = "com.whatsapp"
-        try {
-            packageManager.getPackageInfo(whatsappPackage, PackageManager.GET_ACTIVITIES)
-            shareIntent.setPackage(whatsappPackage)
-            startActivity(shareIntent)
-        } catch (e: PackageManager.NameNotFoundException) {
-            // WhatsApp is not installed, offer a general share chooser
-            Toast.makeText(this, "WhatsApp is not installed. Sharing via general options.", Toast.LENGTH_LONG).show()
-            startActivity(Intent.createChooser(shareIntent, "Share events via..."))
-        }
-        // Alternatively, always use the general share chooser for broader options:
-        // startActivity(Intent.createChooser(shareIntent, "Share events via..."))
-    }
-    // --- End of new method ---
 }
+

@@ -1,5 +1,6 @@
 package com.example.eventmanagement
 
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Bundle
@@ -10,7 +11,7 @@ import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.*
 
-class EditEventActivity : AppCompatActivity() {
+class EditEventActivity : Activity() {
     private lateinit var database: EventDatabase
     private lateinit var dateButton: Button
     private lateinit var timeButton: Button
@@ -51,8 +52,8 @@ class EditEventActivity : AppCompatActivity() {
         nameTextView.text = "Editing event for: $eventName"
         dateButton.text = "Date: $selectedDate"
 
-        // Convert AM/PM to kalai/malai for display
-        val displayTime = selectedTime.replace("AM", "kalai").replace("PM", "malai")
+        // Convert AM/PM to காலை/மாலை for display
+        val displayTime = selectedTime.replace("AM", "காலை").replace("PM", "மாலை")
         timeButton.text = "Time: $displayTime"
     }
 
@@ -94,19 +95,23 @@ class EditEventActivity : AppCompatActivity() {
         val timePickerDialog = TimePickerDialog(
             this,
             { _, hourOfDay, minute ->
-                // Convert 24-hour format to 12-hour format with AM/PM
-                val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-                val time = Calendar.getInstance()
-                time.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                time.set(Calendar.MINUTE, minute)
-                selectedTime = timeFormat.format(time.time)
+                selectedTime = formatTimeWithAmPm(hourOfDay, minute)
                 timeButton.text = "Time: $selectedTime"
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
-            false  // Changed from true to false to show 12-hour format
+            false  // Changed to false to show AM/PM
         )
         timePickerDialog.show()
+    }
+
+    private fun formatTimeWithAmPm(hourOfDay: Int, minute: Int): String {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+        calendar.set(Calendar.MINUTE, minute)
+
+        val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        return timeFormat.format(calendar.time)
     }
 
     private fun saveChanges() {

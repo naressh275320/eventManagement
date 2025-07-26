@@ -1,9 +1,11 @@
 package com.example.eventmanagement
 
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.launch
@@ -11,20 +13,21 @@ import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
     private lateinit var database: EventDatabase
-    private lateinit var nameSpinner: Spinner
     private lateinit var customNameEditText: EditText
     private lateinit var dateButton: Button
-    private lateinit var timeButton: Button
     private lateinit var saveButton: Button
     private lateinit var viewResultsButton: Button
     private lateinit var addCustomNameButton: Button
+    private lateinit var multiSelectListView: ListView
+    private lateinit var selectAllButton: Button
+    private lateinit var clearAllButton: Button
 
     private var selectedDate = ""
-    private var selectedTime = ""
-    private val predefinedNames = mutableListOf("Ruben", "Vishnu", "Mahendra", "Shankar", "Manimaran", "Padmanabhan", "Goapl")
-    private lateinit var adapter: ArrayAdapter<String>
+    private val predefinedNames = mutableListOf("John Doe", "Jane Smith", "Mike Johnson", "Sarah Wilson")
+    private val nameTimeSelections = mutableListOf<NameTimeSelection>()
+    private lateinit var multiSelectAdapter: MultiSelectAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,25 +36,32 @@ class MainActivity : AppCompatActivity() {
         database = EventDatabase.getDatabase(this)
 
         initViews()
-        setupSpinner()
+        setupMultiSelectList()
         setupListeners()
         loadExistingNames()
     }
 
     private fun initViews() {
-        nameSpinner = findViewById(R.id.nameSpinner)
         customNameEditText = findViewById(R.id.customNameEditText)
         dateButton = findViewById(R.id.dateButton)
-        timeButton = findViewById(R.id.timeButton)
         saveButton = findViewById(R.id.saveButton)
         viewResultsButton = findViewById(R.id.viewResultsButton)
         addCustomNameButton = findViewById(R.id.addCustomNameButton)
+        multiSelectListView = findViewById(R.id.multiSelectListView)
+        selectAllButton = findViewById(R.id.selectAllButton)
+        clearAllButton = findViewById(R.id.clearAllButton)
     }
 
-    private fun setupSpinner() {
-        adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, predefinedNames)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        nameSpinner.adapter = adapter
+    private fun setupMultiSelectList() {
+        // Initialize the name-time selections
+        for (name in predefinedNames) {
+            nameTimeSelections.add(NameTimeSelection(name))
+        }
+
+        multiSelectAdapter = MultiSelectAdapter(this, nameTimeSelections) { position ->
+            showTimePickerForPosition(position)
+        }
+        multiSelectListView.adapter = multiSelectAdapter
     }
 
     private fun loadExistingNames() {
@@ -59,12 +69,13 @@ class MainActivity : AppCompatActivity() {
             launch {
                 val existingNames = database.eventDao().getAllNames()
                 for (name in existingNames) {
-                    if (!predefinedNames.contains(name)) {
+                    if (!predefinedNames.contains(name) && name.isNotEmpty()) {
                         predefinedNames.add(name)
+                        nameTimeSelections.add(NameTimeSelection(name))
                     }
                 }
                 runOnUiThread {
-                    adapter.notifyDataSetChanged()
+                    multiSelectAdapter.notifyDataSetChanged()
                 }
             }
         }
@@ -75,7 +86,8 @@ class MainActivity : AppCompatActivity() {
             val customName = customNameEditText.text.toString().trim()
             if (customName.isNotEmpty() && !predefinedNames.contains(customName)) {
                 predefinedNames.add(customName)
-                adapter.notifyDataSetChanged()
+                nameTimeSelections.add(NameTimeSelection(customName))
+                multiSelectAdapter.notifyDataSetChanged()
                 customNameEditText.setText("")
                 Toast.makeText(this, "Name added to list", Toast.LENGTH_SHORT).show()
             } else if (customName.isEmpty()) {
@@ -85,16 +97,27 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        selectAllButton.setOnClickListener {
+            for (selection in nameTimeSelections) {
+                selection.isSelected = true
+            }
+            multiSelectAdapter.notifyDataSetChanged()
+        }
+
+        clearAllButton.setOnClickListener {
+            for (selection in nameTimeSelections) {
+                selection.isSelected = false
+                selection.time = ""
+            }
+            multiSelectAdapter.notifyDataSetChanged()
+        }
+
         dateButton.setOnClickListener {
             showDatePicker()
         }
 
-        timeButton.setOnClickListener {
-            showTimePicker()
-        }
-
         saveButton.setOnClickListener {
-            saveEvent()
+            saveEvents()
         }
 
         viewResultsButton.setOnClickListener {
@@ -118,45 +141,58 @@ class MainActivity : AppCompatActivity() {
         datePickerDialog.show()
     }
 
-    private fun showTimePicker() {
+    private fun showTimePickerForPosition(position: Int) {
         val calendar = Calendar.getInstance()
         val timePickerDialog = TimePickerDialog(
             this,
             { _, hourOfDay, minute ->
-                // Convert 24-hour format to 12-hour format with AM/PM
-                val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-                val time = Calendar.getInstance()
-                time.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                time.set(Calendar.MINUTE, minute)
-                selectedTime = timeFormat.format(time.time)
-                timeButton.text = "Time: $selectedTime"
+                val time = formatTimeWithAmPm(hourOfDay, minute)
+                nameTimeSelections[position].time = time
+                multiSelectAdapter.notifyDataSetChanged()
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
-            false  // Changed from true to false to show 12-hour format
+            false  // Changed to false to show AM/PM
         )
         timePickerDialog.show()
     }
 
-    private fun saveEvent() {
-        val selectedName = nameSpinner.selectedItem.toString()
+    private fun formatTimeWithAmPm(hourOfDay: Int, minute: Int): String {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+        calendar.set(Calendar.MINUTE, minute)
 
-        if (selectedDate.isEmpty() || selectedTime.isEmpty()) {
-            Toast.makeText(this, "Please select both date and time", Toast.LENGTH_SHORT).show()
+        val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        return timeFormat.format(calendar.time)
+    }
+
+    private fun saveEvents() {
+        if (selectedDate.isEmpty()) {
+            Toast.makeText(this, "Please select a date", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val event = Event(
-            name = selectedName,
-            date = selectedDate,
-            time = selectedTime
-        )
+        val selectedPeople = nameTimeSelections.filter { it.isSelected && it.time.isNotEmpty() }
+
+        if (selectedPeople.isEmpty()) {
+            Toast.makeText(this, "Please select at least one person and assign time", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val eventsToSave = selectedPeople.map { selection ->
+            Event(
+                name = selection.name,
+                date = selectedDate,
+                time = selection.time
+            )
+        }
 
         runBlocking {
             launch {
-                database.eventDao().insertEvent(event)
+                database.eventDao().insertEvents(eventsToSave)
                 runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Event saved successfully", Toast.LENGTH_SHORT).show()
+                    val message = "Saved ${eventsToSave.size} events successfully!"
+                    Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
                     resetFields()
                 }
             }
@@ -165,9 +201,58 @@ class MainActivity : AppCompatActivity() {
 
     private fun resetFields() {
         selectedDate = ""
-        selectedTime = ""
         dateButton.text = "Select Date"
-        timeButton.text = "Select Time"
-        nameSpinner.setSelection(0)
+
+        for (selection in nameTimeSelections) {
+            selection.isSelected = false
+            selection.time = ""
+        }
+        multiSelectAdapter.notifyDataSetChanged()
+    }
+}
+
+class MultiSelectAdapter(
+    private val context: Activity,
+    private val nameTimeSelections: MutableList<NameTimeSelection>,
+    private val onTimeClick: (Int) -> Unit
+) : BaseAdapter() {
+
+    override fun getCount(): Int = nameTimeSelections.size
+
+    override fun getItem(position: Int): Any = nameTimeSelections[position]
+
+    override fun getItemId(position: Int): Long = position.toLong()
+
+    override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup?): View {
+        val view = convertView ?: context.layoutInflater.inflate(R.layout.multi_select_item, parent, false)
+
+        val checkBox = view.findViewById<CheckBox>(R.id.nameCheckBox)
+        val nameText = view.findViewById<TextView>(R.id.nameTextView)
+        val timeButton = view.findViewById<Button>(R.id.timeSelectButton)
+
+        val selection = nameTimeSelections[position]
+
+        checkBox.text = selection.name
+        checkBox.isChecked = selection.isSelected
+
+        timeButton.text = if (selection.time.isEmpty()) "Select Time" else "Time: ${selection.time}"
+        timeButton.isEnabled = selection.isSelected
+
+        checkBox.setOnCheckedChangeListener { _, isChecked ->
+            selection.isSelected = isChecked
+            timeButton.isEnabled = isChecked
+            if (!isChecked) {
+                selection.time = ""
+                timeButton.text = "Select Time"
+            }
+        }
+
+        timeButton.setOnClickListener {
+            if (selection.isSelected) {
+                onTimeClick(position)
+            }
+        }
+
+        return view
     }
 }
