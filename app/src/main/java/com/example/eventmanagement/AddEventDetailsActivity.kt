@@ -3,7 +3,6 @@ package com.example.eventmanagement
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.content.Intent
 import android.os.Bundle
 import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
