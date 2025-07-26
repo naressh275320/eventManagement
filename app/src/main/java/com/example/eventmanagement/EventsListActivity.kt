@@ -86,8 +86,8 @@ class EventsListActivity : Activity() {
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
-                        val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
-                        "Date: ${event.date} | Time: $customTime"
+                        val customTime = event.time.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
+                        "Date: ${event.date} \nTime: $customTime"
                     }
 
                     eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
@@ -131,8 +131,8 @@ class EventsListActivity : Activity() {
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
-                        val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
-                        "${event.name}: Date: ${event.date} | Time: $customTime" // Include name in display
+                        val customTime = event.time.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
+                        "Date: ${event.date} \nTime: $customTime"
                     }
 
                     eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
@@ -209,10 +209,10 @@ class EventsListActivity : Activity() {
         stringBuilder.append(nameTextView.text.toString()).append("\n\n")
 
         if (eventsList.isNotEmpty()) {
-            stringBuilder.append("My Events:\n")
+//            stringBuilder.append("My Events:\n")
             for (event in eventsList) {
-                val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
-                stringBuilder.append("- ${event.name}: Date: ${event.date} | Time: $customTime\n") // Include name
+                val customTime = event.time.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
+                stringBuilder.append("Date: ${event.date} \nTime: $customTime\n") // Include name
             }
         } else {
             stringBuilder.append("No upcoming events to share!")

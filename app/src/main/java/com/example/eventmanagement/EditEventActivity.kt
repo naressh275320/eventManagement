@@ -52,7 +52,7 @@ class EditEventActivity : Activity() {
         dateButton.text = "Date: $selectedDate"
 
         // Convert AM/PM to காலை/மாலை for display
-        val displayTime = selectedTime.replace("AM", "காலை").replace("PM", "மாலை")
+        val displayTime = selectedTime.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
         timeButton.text = "Time: $displayTime"
     }
 
