@@ -1,35 +1,38 @@
-/*
- * (C) Copyright Elektrobit Automotive GmbH
- * All rights reserved
- */
-
 package com.example.eventmanagement
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Delete
 import androidx.room.Update
 
 @Dao
 interface EventDao {
-    @Query("SELECT * FROM events WHERE name = :name ORDER BY timestamp DESC")
-    suspend fun getEventsByName(name: String): List<Event>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEvents(events: List<Event>)
 
-    @Query("SELECT DISTINCT name FROM events ORDER BY name")
+    // This query gets all distinct names from the Event table
+    @Query("SELECT DISTINCT name FROM events ORDER BY name ASC")
     suspend fun getAllNames(): List<String>
 
-    @Query("SELECT * FROM events WHERE date = :date AND time = :time")
-    suspend fun getEventsAtDateTime(date: String, time: String): List<Event>
+    // Get future events for a specific name
+    @Query("SELECT * FROM events WHERE name = :name AND date >= :currentDate ORDER BY date ASC, time ASC")
+    suspend fun getFutureEventsByName(name: String, currentDate: String): List<Event>
 
-    @Insert
-    suspend fun insertEvent(event: Event)
+    // New query to get ALL events (you'll filter for "future" in the Activity)
+    @Query("SELECT * FROM events")
+    suspend fun getAllEvents(): List<Event>
 
-    @Insert
-    suspend fun insertEvents(events: List<Event>)
+    // Delete expired events
+    @Query("DELETE FROM events WHERE date < :currentDate")
+    suspend fun deleteExpiredEvents(currentDate: String)
 
     @Delete
     suspend fun deleteEvent(event: Event)
+
+    @Query("SELECT * FROM events WHERE id = :eventId")
+    suspend fun getEventById(eventId: Int): Event?
 
     @Update
     suspend fun updateEvent(event: Event)

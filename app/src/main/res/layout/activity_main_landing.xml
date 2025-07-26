@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Event Management System"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="60dp"
+        android:gravity="center" />
+
+    <Button
+        android:id="@+id/buttonAddNames"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Manage People"
+        android:textSize="18sp"
+        android:layout_marginBottom="24dp"
+        android:backgroundTint="@android:color/holo_blue_dark" />
+
+    <Button
+        android:id="@+id/buttonAddEventDetails"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Event Details"
+        android:textSize="18sp"
+        android:layout_marginBottom="24dp"
+        android:backgroundTint="@android:color/holo_green_dark" />
+
+    <Button
+        android:id="@+id/buttonViewResults"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View All Events"
+        android:textSize="18sp"
+        android:backgroundTint="@android:color/holo_orange_dark" />
+
+</LinearLayout>

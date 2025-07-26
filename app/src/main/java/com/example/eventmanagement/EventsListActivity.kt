@@ -2,18 +2,14 @@ package com.example.eventmanagement
 
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.*
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import android.content.pm.PackageManager
 
 class EventsListActivity : Activity() {
     private lateinit var database: EventDatabase
@@ -24,18 +20,29 @@ class EventsListActivity : Activity() {
 
     private var eventsList = mutableListOf<Event>()
     private lateinit var eventsAdapter: ArrayAdapter<String>
-    private var selectedName: String = ""
+    private var selectedName: String = "" // Will be empty for "View All Events"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_events_list)
 
         database = EventDatabase.getDatabase(this)
+        // Check if a specific name was passed (from the old workflow, or if you plan to filter)
         selectedName = intent.getStringExtra("selected_name") ?: ""
 
         initViews()
         setupListeners()
-        loadEventsForName(selectedName)
+        // Data loading is moved to onResume()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Reload events every time the activity comes to the foreground
+        if (selectedName.isEmpty()) {
+            loadAllFutureEvents() // New method to load all events for "View All Events" page
+        } else {
+            loadEventsForName(selectedName) // Keep original logic if filtering by specific name
+        }
     }
 
     private fun initViews() {
@@ -44,7 +51,11 @@ class EventsListActivity : Activity() {
         backButton = findViewById(R.id.eventsBackButton)
         shareButton = findViewById(R.id.shareButton)
 
-        nameTextView.text = "Events for: $selectedName"
+        if (selectedName.isEmpty()) {
+            nameTextView.text = "All Upcoming Events" // Title for the new "View All Events" page
+        } else {
+            nameTextView.text = "Events for: $selectedName" // Keep for single-person view if still used
+        }
     }
 
     private fun setupListeners() {
@@ -52,29 +63,26 @@ class EventsListActivity : Activity() {
             finish()
         }
 
-        shareButton.setOnClickListener {
-            shareEventsListToWhatsApp()
-        }
-
         eventsListView.setOnItemClickListener { _, _, position, _ ->
             if (position < eventsList.size) {
                 showEditDeleteDialog(eventsList[position])
             }
         }
+
+        shareButton.setOnClickListener {
+            shareEventsToWhatsApp()
+        }
     }
 
+    // Existing method for specific name filtering (if still desired)
     private fun loadEventsForName(name: String) {
         runBlocking {
             launch {
+                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                database.eventDao().deleteExpiredEvents(currentDate) // Clean up expired events first
+
                 eventsList.clear()
-                val allEvents = database.eventDao().getEventsByName(name)
-
-                // Filter out past events - only show future events
-                val futureEvents = allEvents.filter { event ->
-                    isEventInFuture(event.date)
-                }
-
-                eventsList.addAll(futureEvents)
+                eventsList.addAll(database.eventDao().getFutureEventsByName(name, currentDate))
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
@@ -86,41 +94,55 @@ class EventsListActivity : Activity() {
                     eventsListView.adapter = eventsAdapter
 
                     if (eventsList.isEmpty()) {
-                        if (allEvents.isNotEmpty()) {
-                            Toast.makeText(this@EventsListActivity, "All events for $name have passed", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this@EventsListActivity, "No events found for $name", Toast.LENGTH_SHORT).show()
-                        }
+                        Toast.makeText(this@EventsListActivity, "No upcoming events found for $name", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
     }
 
-    private fun isEventInFuture(eventDateString: String): Boolean {
-        return try {
-            val dateFormat = SimpleDateFormat("d/M/yyyy", Locale.getDefault())
-            val eventDate = dateFormat.parse(eventDateString)
-            val currentDate = Calendar.getInstance()
+    // New method to load all future events for the "View All" page
+    private fun loadAllFutureEvents() {
+        runBlocking {
+            launch {
+                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                database.eventDao().deleteExpiredEvents(currentDate) // Clean up expired events first
 
-            // Set current date to start of day (00:00:00) for accurate comparison
-            currentDate.set(Calendar.HOUR_OF_DAY, 0)
-            currentDate.set(Calendar.MINUTE, 0)
-            currentDate.set(Calendar.SECOND, 0)
-            currentDate.set(Calendar.MILLISECOND, 0)
+                eventsList.clear()
+                val allEvents = database.eventDao().getAllEvents() // Get ALL events from DB
 
-            val eventCalendar = Calendar.getInstance()
-            eventCalendar.time = eventDate ?: return false
-            eventCalendar.set(Calendar.HOUR_OF_DAY, 0)
-            eventCalendar.set(Calendar.MINUTE, 0)
-            eventCalendar.set(Calendar.SECOND, 0)
-            eventCalendar.set(Calendar.MILLISECOND, 0)
+                // Filter for future events and sort them
+                val futureEvents = allEvents.filter { event ->
+                    try {
+                        val eventDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(event.date)
+                        val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(currentDate)
+                        eventDate != null && (eventDate.after(today) || eventDate.equals(today))
+                    } catch (e: Exception) {
+                        // Handle parsing errors if date format is inconsistent
+                        false
+                    }
+                }.sortedWith(compareBy(
+                    { it.name }, // Sort by name first
+                    { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(it.date) }, // Then by date
+                    { it.time } // Then by time
+                ))
 
-            // Return true if event date is today or in the future
-            !eventCalendar.before(currentDate)
-        } catch (e: Exception) {
-            // If date parsing fails, show the event to be safe
-            true
+                eventsList.addAll(futureEvents)
+
+                runOnUiThread {
+                    val displayList = eventsList.map { event ->
+                        val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
+                        "${event.name}: Date: ${event.date} | Time: $customTime" // Include name in display
+                    }
+
+                    eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
+                    eventsListView.adapter = eventsAdapter
+
+                    if (eventsList.isEmpty()) {
+                        Toast.makeText(this@EventsListActivity, "No upcoming events found.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
     }
 
@@ -156,7 +178,12 @@ class EventsListActivity : Activity() {
                     database.eventDao().deleteEvent(event)
                     runOnUiThread {
                         Toast.makeText(this@EventsListActivity, "Event deleted", Toast.LENGTH_SHORT).show()
-                        loadEventsForName(event.name)
+                        // After deleting, reload based on current context
+                        if (selectedName.isEmpty()) {
+                            loadAllFutureEvents()
+                        } else {
+                            loadEventsForName(selectedName)
+                        }
                     }
                 }
             }
@@ -165,53 +192,46 @@ class EventsListActivity : Activity() {
         builder.show()
     }
 
-    private fun shareEventsListToWhatsApp() {
-        if (eventsList.isEmpty()) {
-            Toast.makeText(this, "No events to share", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val shareText = buildShareText()
-
-        try {
-            val whatsappIntent = Intent(Intent.ACTION_SEND)
-            whatsappIntent.type = "text/plain"
-            whatsappIntent.setPackage("com.whatsapp")
-            whatsappIntent.putExtra(Intent.EXTRA_TEXT, shareText)
-            startActivity(whatsappIntent)
-        } catch (e: Exception) {
-            // If WhatsApp is not installed, show generic share dialog
-            val shareIntent = Intent(Intent.ACTION_SEND)
-            shareIntent.type = "text/plain"
-            shareIntent.putExtra(Intent.EXTRA_TEXT, shareText)
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Events for $selectedName")
-            startActivity(Intent.createChooser(shareIntent, "Share Events via"))
-        }
-    }
-
-    private fun buildShareText(): String {
-        val shareText = StringBuilder()
-        shareText.append("Event Schedule for $selectedName\n\n")
-
-        if (eventsList.isNotEmpty()) {
-            // Sort events by date and time (only future events are in the list)
-            val sortedEvents = eventsList.sortedWith(compareBy({ it.date }, { it.time }))
-
-            for (event in sortedEvents) {
-                val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
-                shareText.append("Date: ${event.date}\n")
-                shareText.append("Time: $customTime\n\n")
-            }
-        }
-
-        return shareText.toString().trim()
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 1 && resultCode == RESULT_OK) {
-            loadEventsForName(selectedName)
+            // If an event was edited, reload the list
+            if (selectedName.isEmpty()) {
+                loadAllFutureEvents()
+            } else {
+                loadEventsForName(selectedName)
+            }
+        }
+    }
+
+    private fun shareEventsToWhatsApp() {
+        val stringBuilder = StringBuilder()
+        stringBuilder.append(nameTextView.text.toString()).append("\n\n")
+
+        if (eventsList.isNotEmpty()) {
+            stringBuilder.append("My Events:\n")
+            for (event in eventsList) {
+                val customTime = event.time.replace("AM", "காலை").replace("PM", "மாலை")
+                stringBuilder.append("- ${event.name}: Date: ${event.date} | Time: $customTime\n") // Include name
+            }
+        } else {
+            stringBuilder.append("No upcoming events to share!")
+        }
+
+        val shareText = stringBuilder.toString()
+
+        val shareIntent = Intent(Intent.ACTION_SEND)
+        shareIntent.type = "text/plain"
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText)
+
+        val whatsappPackage = "com.whatsapp"
+        try {
+            packageManager.getPackageInfo(whatsappPackage, PackageManager.GET_ACTIVITIES)
+            shareIntent.setPackage(whatsappPackage)
+            startActivity(shareIntent)
+        } catch (e: PackageManager.NameNotFoundException) {
+            Toast.makeText(this, "WhatsApp is not installed. Sharing via general options.", Toast.LENGTH_LONG).show()
+            startActivity(Intent.createChooser(shareIntent, "Share events via..."))
         }
     }
 }
-

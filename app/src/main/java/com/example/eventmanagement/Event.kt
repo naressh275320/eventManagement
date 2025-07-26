@@ -1,8 +1,3 @@
-/*
- * (C) Copyright Elektrobit Automotive GmbH
- * All rights reserved
- */
-
 package com.example.eventmanagement
 
 import androidx.room.Entity

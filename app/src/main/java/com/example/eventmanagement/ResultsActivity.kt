@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -21,8 +20,12 @@ class ResultsActivity : Activity() {
         database = EventDatabase.getDatabase(this)
 
         initViews()
-        setupSpinner()
         setupListeners()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupSpinner() // Reload names in spinner every time this activity comes to foreground
     }
 
     private fun initViews() {
@@ -34,16 +37,20 @@ class ResultsActivity : Activity() {
     private fun setupSpinner() {
         runBlocking {
             launch {
-                val names = database.eventDao().getAllNames()
+                // Get names from the new NameDao
+                val names = database.nameDao().getAllNames()
                 runOnUiThread {
                     if (names.isEmpty()) {
-                        Toast.makeText(this@ResultsActivity, "No names found. Add some events first.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@ResultsActivity, "No names added yet. Go to 'Manage People' first.", Toast.LENGTH_LONG).show()
                         showEventsButton.isEnabled = false
-                        showEventsButton.text = "No Events Available"
+                        showEventsButton.text = "No Names Available"
+                        nameSpinner.adapter = null
                     } else {
                         val adapter = ArrayAdapter(this@ResultsActivity, android.R.layout.simple_spinner_item, names)
                         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                         nameSpinner.adapter = adapter
+                        showEventsButton.isEnabled = true
+                        showEventsButton.text = "Show Events for Selected Person"
                     }
                 }
             }
