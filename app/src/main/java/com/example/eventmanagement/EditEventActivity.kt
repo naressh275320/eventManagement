@@ -52,8 +52,24 @@ class EditEventActivity : Activity() {
         dateButton.text = "Date: $selectedDate"
 
         // Convert AM/PM to காலை/மாலை for display
-        val displayTime = selectedTime.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
-        timeButton.text = "Time: $displayTime"
+        val convertedTimeWithIndicator = selectedTime
+            .replace("AM", "காலை", ignoreCase = true)
+            .replace("PM", "மாலை", ignoreCase = true)
+
+        // 2. Now, reformat the `convertedTimeWithIndicator` for the button display
+        //    Example: "03:00 காலை" will be split into ["03:00", "காலை"]
+        val timeParts = convertedTimeWithIndicator.split(" ")
+
+        if (timeParts.size == 2) {
+            val timeValue = timeParts[0] // This will be "03:00"
+            val amPmIndicator = timeParts[1] // This will be "காலை" or "மாலை"
+
+            // 3. Construct the display string with the desired order
+            timeButton.text = "Time: $amPmIndicator $timeValue"
+        } else {
+            // Fallback case if the format isn't as expected (e.g., no space or unexpected characters)
+            timeButton.text = "Time: $convertedTimeWithIndicator"
+        }
     }
 
     private fun setupListeners() {

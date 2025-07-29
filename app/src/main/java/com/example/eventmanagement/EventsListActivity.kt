@@ -86,8 +86,26 @@ class EventsListActivity : Activity() {
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
-                        val customTime = event.time.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
-                        "Date: ${event.date} \nTime: $customTime"
+                        // 1. Convert AM/PM to காலை/மாலை first
+                        val convertedTimeWithIndicator = event.time
+                            .replace("AM", "காலை", ignoreCase = true)
+                            .replace("PM", "மாலை", ignoreCase = true)
+
+                        // 2. Now, reformat the `convertedTimeWithIndicator` for display
+                        val formattedTimeForDisplay: String
+                        val timeParts = convertedTimeWithIndicator.split(" ") // Splits into ["HH:MM", "காலை/மாலை"]
+
+                        if (timeParts.size == 2) {
+                            val timeValue = timeParts[0] // This will be "03:00"
+                            val amPmIndicator = timeParts[1] // This will be "காலை" or "மாலை"
+                            formattedTimeForDisplay = "$amPmIndicator $timeValue" // Reordered: "காலை 03:00"
+                        } else {
+                            // Fallback case if the format isn't as expected
+                            formattedTimeForDisplay = convertedTimeWithIndicator
+                        }
+
+                        // Combine into the final display string for this event
+                        "Date: ${event.date} \nTime: $formattedTimeForDisplay"
                     }
 
                     eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
@@ -131,8 +149,26 @@ class EventsListActivity : Activity() {
 
                 runOnUiThread {
                     val displayList = eventsList.map { event ->
-                        val customTime = event.time.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
-                        "Date: ${event.date} \nTime: $customTime"
+                        // 1. Convert AM/PM to காலை/மாலை first
+                        val convertedTimeWithIndicator = event.time
+                            .replace("AM", "காலை", ignoreCase = true)
+                            .replace("PM", "மாலை", ignoreCase = true)
+
+                        // 2. Now, reformat the `convertedTimeWithIndicator` for display
+                        val formattedTimeForDisplay: String
+                        val timeParts = convertedTimeWithIndicator.split(" ") // Splits into ["HH:MM", "காலை/மாலை"]
+
+                        if (timeParts.size == 2) {
+                            val timeValue = timeParts[0] // This will be "03:00"
+                            val amPmIndicator = timeParts[1] // This will be "காலை" or "மாலை"
+                            formattedTimeForDisplay = "$amPmIndicator $timeValue" // Reordered: "காலை 03:00"
+                        } else {
+                            // Fallback case if the format isn't as expected
+                            formattedTimeForDisplay = convertedTimeWithIndicator
+                        }
+
+                        // Combine into the final display string for this event
+                        "Date: ${event.date} \nTime: $formattedTimeForDisplay"
                     }
 
                     eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
@@ -209,10 +245,27 @@ class EventsListActivity : Activity() {
         stringBuilder.append(nameTextView.text.toString()).append("\n\n")
 
         if (eventsList.isNotEmpty()) {
-//            stringBuilder.append("My Events:\n")
             for (event in eventsList) {
-                val customTime = event.time.replace("AM", "காலை", ignoreCase = true).replace("PM", "மாலை", ignoreCase = true)
-                stringBuilder.append("Date: ${event.date} \nTime: $customTime\n") // Include name
+                // 1. Convert AM/PM to காலை/மாலை
+                val customTimeWithIndicator = event.time
+                    .replace("AM", "காலை", ignoreCase = true)
+                    .replace("PM", "மாலை", ignoreCase = true)
+
+                // 2. Reformat the `customTimeWithIndicator` for display
+                val formattedTimeForDisplay: String
+                val timeParts = customTimeWithIndicator.split(" ") // Splits into ["HH:MM", "காலை/மாலை"]
+
+                if (timeParts.size == 2) {
+                    val timeValue = timeParts[0] // This will be "03:00"
+                    val amPmIndicator = timeParts[1] // This will be "காலை" or "மாலை"
+                    formattedTimeForDisplay = "$amPmIndicator $timeValue" // Reordered: "காலை 03:00"
+                } else {
+                    // Fallback case if the format isn't as expected
+                    formattedTimeForDisplay = customTimeWithIndicator
+                }
+
+                // 3. Append the reformatted time to the StringBuilder
+                stringBuilder.append("Date: ${event.date} \nTime: $formattedTimeForDisplay\n")
             }
         } else {
             stringBuilder.append("No upcoming events to share!")
