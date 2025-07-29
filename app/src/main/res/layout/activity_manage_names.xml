@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/white"
     android:padding="16dp">
 
     <TextView
@@ -11,6 +12,8 @@
         android:text="Manage People"
         android:textSize="24sp"
         android:textStyle="bold"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/black"
         android:gravity="center"
         android:layout_marginBottom="24dp" />
 
@@ -18,6 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Add Custom Name:"
+        android:textColor="@color/black"
         android:textSize="16sp"
         android:layout_marginBottom="8dp" />
 
@@ -33,6 +37,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Enter new name"
+            android:textColor="@color/black"
+            android:textColorHint="@color/black"
             android:inputType="textPersonName" />
 
         <Button
@@ -40,7 +46,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Add"
-            android:layout_marginStart="8dp" />
+            android:textColor="@color/white"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@android:color/black"/>
 
     </LinearLayout>
 
@@ -49,6 +57,7 @@
         android:layout_height="wrap_content"
         android:text="Currently Available Names:"
         android:textSize="16sp"
+        android:textColor="@color/black"
         android:layout_marginBottom="8dp" />
 
     <ListView
@@ -57,8 +66,9 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginBottom="16dp"
-        android:divider="@android:color/darker_gray"
+        android:divider="@android:color/holo_blue_light"
         android:dividerHeight="1dp"
+        android:textColor="@color/black"
         android:background="@android:drawable/editbox_background" />
 
     <Button
@@ -66,7 +76,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Back to Home"
+        android:textColor="@color/white"
         android:layout_marginTop="24dp"
-        android:backgroundTint="@android:color/holo_blue_light" />
+        android:backgroundTint="@android:color/black" />
 
 </LinearLayout>

@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/white"
     android:padding="16dp">
 
     <TextView
@@ -12,6 +13,7 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:gravity="center"
+        android:textColor="@color/black"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="16dp" />
 
@@ -19,12 +21,11 @@
         android:id="@+id/selectedNameTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Events for: "
-        android:textSize="18sp"
+        android:text="EVENTS FOR: "
         android:textStyle="bold"
         android:layout_marginBottom="16dp"
         android:gravity="center"
-        android:background="@android:color/holo_blue_light"
+        android:background="@android:color/holo_blue_dark"
         android:padding="8dp"
         android:textColor="@android:color/white" />
 
@@ -32,6 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Events (Tap to Edit/Delete):"
+        android:textColor="@color/black"
         android:textSize="16sp"
         android:layout_marginBottom="8dp" />
 
@@ -41,6 +43,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginBottom="16dp"
+        android:textColor="@color/black"
         android:divider="@android:color/holo_blue_light"
         android:dividerHeight="1dp" />
 
@@ -58,7 +61,8 @@
         android:id="@+id/eventsBackButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/white"
         android:text="Back to Results Page"
-        android:backgroundTint="@android:color/holo_orange_dark" />
+        android:backgroundTint="@android:color/black" />
 
 </LinearLayout>

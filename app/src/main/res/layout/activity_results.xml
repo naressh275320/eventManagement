@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/white"
     android:padding="16dp">
 
     <TextView
@@ -11,6 +12,7 @@
         android:text="Event Results"
         android:textSize="24sp"
         android:textStyle="bold"
+        android:textColor="@color/black"
         android:gravity="center"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="24dp" />
@@ -20,12 +22,14 @@
         android:layout_height="wrap_content"
         android:text="Select Name:"
         android:textSize="16sp"
+        android:textColor="@color/black"
         android:layout_marginBottom="8dp" />
 
     <Spinner
         android:id="@+id/resultsNameSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/spinner_background"
         android:layout_marginBottom="16dp" />
 
     <Button
@@ -34,6 +38,7 @@
         android:layout_height="wrap_content"
         android:text="Show Events in New Page"
         android:layout_marginBottom="16dp"
+        android:textColor="@color/white"
         android:backgroundTint="@android:color/holo_blue_dark" />
 
     <TextView
@@ -43,6 +48,7 @@
         android:textSize="14sp"
         android:layout_marginBottom="8dp"
         android:gravity="center"
+        android:textColor="@color/black"
         android:textStyle="italic" />
 
     <ListView
@@ -50,6 +56,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:textColor="@color/black"
         android:layout_marginBottom="16dp" />
 
     <Button
@@ -57,6 +64,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Back to Main"
-        android:backgroundTint="@android:color/holo_orange_dark" />
+        android:textColor="@color/white"
+        android:backgroundTint="@android:color/black" />
 
 </LinearLayout>

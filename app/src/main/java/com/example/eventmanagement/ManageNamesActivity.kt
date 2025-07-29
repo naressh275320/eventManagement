@@ -2,11 +2,15 @@ package com.example.eventmanagement
 
 import android.app.Activity
 import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
+import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -41,7 +45,17 @@ class ManageNamesActivity : Activity() {
         existingNamesListView = findViewById(R.id.existingNamesListView)
         backToHomeButton = findViewById(R.id.backToHomeButton)
 
-        namesAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, currentNames)
+        namesAdapter = object : ArrayAdapter<String>(
+            this,
+            android.R.layout.simple_list_item_1,
+            currentNames
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent) as TextView
+                view.setTextColor(ContextCompat.getColor(context, R.color.black))
+                return view
+            }
+        }
         existingNamesListView.adapter = namesAdapter
     }
 

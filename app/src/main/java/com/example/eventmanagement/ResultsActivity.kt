@@ -46,7 +46,7 @@ class ResultsActivity : Activity() {
                         showEventsButton.text = "No Names Available"
                         nameSpinner.adapter = null
                     } else {
-                        val adapter = ArrayAdapter(this@ResultsActivity, android.R.layout.simple_spinner_item, names)
+                        val adapter = ArrayAdapter(this@ResultsActivity, R.layout.spinner_item, names)
                         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                         nameSpinner.adapter = adapter
                         showEventsButton.isEnabled = true

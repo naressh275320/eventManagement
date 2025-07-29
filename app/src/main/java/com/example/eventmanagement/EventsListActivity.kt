@@ -10,6 +10,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.content.pm.PackageManager
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 
 class EventsListActivity : Activity() {
     private lateinit var database: EventDatabase
@@ -54,7 +57,7 @@ class EventsListActivity : Activity() {
         if (selectedName.isEmpty()) {
             nameTextView.text = "All Upcoming Events" // Title for the new "View All Events" page
         } else {
-            nameTextView.text = "Events for: $selectedName" // Keep for single-person view if still used
+            nameTextView.text = "EVENTS FOR: ${selectedName.uppercase()}" // Keep for single-person view if still used
         }
     }
 
@@ -108,7 +111,17 @@ class EventsListActivity : Activity() {
                         "Date: ${event.date} \nTime: $formattedTimeForDisplay"
                     }
 
-                    eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
+                    eventsAdapter = object : ArrayAdapter<String>(
+                        this@EventsListActivity,
+                        android.R.layout.simple_list_item_1,
+                        displayList
+                    ) {
+                        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                            val view = super.getView(position, convertView, parent) as TextView
+                            view.setTextColor(ContextCompat.getColor(context, R.color.black))
+                            return view
+                        }
+                    }
                     eventsListView.adapter = eventsAdapter
 
                     if (eventsList.isEmpty()) {
@@ -171,7 +184,17 @@ class EventsListActivity : Activity() {
                         "Date: ${event.date} \nTime: $formattedTimeForDisplay"
                     }
 
-                    eventsAdapter = ArrayAdapter(this@EventsListActivity, android.R.layout.simple_list_item_1, displayList)
+                    eventsAdapter = object : ArrayAdapter<String>(
+                        this@EventsListActivity,
+                        android.R.layout.simple_list_item_1,
+                        displayList
+                    ) {
+                        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                            val view = super.getView(position, convertView, parent) as TextView
+                            view.setTextColor(ContextCompat.getColor(context, R.color.black))
+                            return view
+                        }
+                    }
                     eventsListView.adapter = eventsAdapter
 
                     if (eventsList.isEmpty()) {

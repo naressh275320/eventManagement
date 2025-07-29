@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
+    android:background="@color/white"
     android:padding="24dp">
 
     <TextView
@@ -11,6 +12,7 @@
         android:layout_height="wrap_content"
         android:text="JB CATERING"
         android:textSize="48sp"
+        android:textColor="@color/black"
         android:textStyle="italic"
         android:layout_marginBottom="60dp"
         android:gravity="center" />
@@ -22,36 +24,40 @@
         android:text="Staff Management System"
         android:textSize="28sp"
         android:textStyle="bold"
+        android:textColor="@color/black"
         android:layout_marginBottom="60dp"
         android:gravity="center" />
 
     <Button
         android:id="@+id/buttonAddNames"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:text="Manage People"
         android:textSize="18sp"
         android:textColor="@color/white"
         android:layout_marginBottom="24dp"
+        android:background="@drawable/rounded_button_background"
         android:backgroundTint="@android:color/holo_blue_dark" />
 
     <Button
         android:id="@+id/buttonAddEventDetails"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:text="Add Event Details"
         android:textColor="@color/white"
         android:textSize="18sp"
+        android:background="@drawable/rounded_button_background"
         android:layout_marginBottom="24dp"
-        android:backgroundTint="@android:color/holo_green_dark" />
+        android:backgroundTint="@android:color/holo_blue_dark" />
 
     <Button
         android:id="@+id/buttonViewResults"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:text="View All Events"
         android:textColor="@color/white"
+        android:background="@drawable/rounded_button_background"
         android:textSize="18sp"
-        android:backgroundTint="@android:color/holo_orange_dark" />
+        android:backgroundTint="@android:color/holo_blue_dark" />
 
 </LinearLayout>
